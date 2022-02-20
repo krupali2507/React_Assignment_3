@@ -1,0 +1,8 @@
+.image-thumbnail {
+  flex-basis: 19%;
+}
+
+.thumbnail {
+  width: 250px;
+  height: 250px;
+}
