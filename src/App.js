@@ -1,6 +1,7 @@
 import {Component} from 'react'
+import TabItem from './components/TabItem'
+import ImageItem from './components/ImageItem'
 import './App.css'
-import MatchGame from './components/MatchGame'
 
 // These are the lists used in the application. You can move them to any component needed.
 const tabsList = [
@@ -252,25 +253,158 @@ const imagesList = [
 class App extends Component {
   state = {
     activeTabId: tabsList[0].tabId,
+    randomNumber: 0,
+    score: 0,
+    timer: 60,
+    showResult: false,
+  }
+
+  componentDidMount() {
+    this.timerId = setInterval(this.tick, 1000)
+  }
+
+  tick = () => {
+    const {timer} = this.state
+
+    if (timer > 0) {
+      this.setState(prevState => ({timer: prevState.timer - 1}))
+    } else if (timer === 0) {
+      clearInterval(this.timerId)
+      this.setState({showResult: true})
+    }
   }
 
   onChangeTab = id => {
     this.setState({activeTabId: id})
   }
 
-  render() {
+  onClickMatchImage = id => {
+    const {randomNumber, timer} = this.state
+    const activeImageId = imagesList[randomNumber].id
+    const randomNumberGenerate = Math.ceil(Math.random() * imagesList.length)
+
+    if (activeImageId === id && timer > 0) {
+      this.setState(prevState => ({
+        score: prevState.score + 1,
+        randomNumber: randomNumberGenerate,
+      }))
+    } else {
+      this.setState({showResult: true})
+    }
+  }
+
+  onClickPlayAgain = () => {
+    this.setState({showResult: false, timer: 60, score: 0})
+  }
+
+  renderTabsView = () => {
     const {activeTabId} = this.state
-    const activeTabImageList = imagesList.filter(
+
+    return (
+      <ul className="tabs-container">
+        {tabsList.map(eachTab => (
+          <TabItem
+            tabDetail={eachTab}
+            key={eachTab.tabId}
+            isActive={activeTabId === eachTab.tabId}
+            onChangeTab={this.onChangeTab}
+          />
+        ))}
+      </ul>
+    )
+  }
+
+  renderImageListView = () => {
+    const {activeTabId} = this.state
+
+    const activeTabImagesList = imagesList.filter(
       eachImage => eachImage.category === activeTabId,
     )
+
     return (
-      <MatchGame
-        tabsList={tabsList}
-        activeTabImageList={activeTabImageList}
-        activeTabId={activeTabId}
-        onChangeTab={this.onChangeTab}
-        imagesList={imagesList}
-      />
+      <ul className="images-container">
+        {activeTabImagesList.map(eachImage => (
+          <ImageItem
+            imageDetail={eachImage}
+            key={eachImage.id}
+            onClickMatchImage={this.onClickMatchImage}
+          />
+        ))}
+      </ul>
+    )
+  }
+
+  renderResultView = () => {
+    const {score} = this.state
+
+    return (
+      <div className="result-bg-container">
+        <img
+          src="https://assets.ccbp.in/frontend/react-js/match-game-trophy.png"
+          alt="trophy"
+          className="trophy-image"
+        />
+        <div>
+          <p className="score">Your Score</p>
+          <p className="score">{score}</p>
+        </div>
+        <button
+          type="button"
+          className="play-again-btn"
+          onClick={this.onClickPlayAgain}
+        >
+          <img
+            src="https://assets.ccbp.in/frontend/react-js/match-game-play-again-img.png"
+            alt="reset"
+          />
+          PLAY AGAIN
+        </button>
+      </div>
+    )
+  }
+
+  render() {
+    const {randomNumber, score, timer, showResult} = this.state
+
+    const {imageUrl} = imagesList[randomNumber]
+
+    return (
+      <div className="container">
+        <nav className="navbar-container">
+          <img
+            src="https://assets.ccbp.in/frontend/react-js/match-game-website-logo.png"
+            alt="website logo"
+            className="website-logo"
+          />
+          <ul className="score-timer-container">
+            <li className="score-title">
+              <p>
+                Score: <span className="color">{score}</span>
+              </p>
+            </li>
+            <img
+              src="https://assets.ccbp.in/frontend/react-js/match-game-timer-img.png"
+              alt="timer"
+              className="timer-icon"
+            />
+            <li>
+              <p className="color">{timer} sec</p>
+            </li>
+          </ul>
+        </nav>
+
+        <div className="bg-container">
+          {showResult ? (
+            this.renderResultView()
+          ) : (
+            <>
+              <img src={imageUrl} alt="match" className="random-match-image" />
+              {this.renderTabsView()}
+              {this.renderImageListView()}
+            </>
+          )}
+        </div>
+      </div>
     )
   }
 }
